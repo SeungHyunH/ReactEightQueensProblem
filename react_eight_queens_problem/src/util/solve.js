@@ -1,52 +1,50 @@
 export function solve(BOARD_SIZE){
-    const solutionList = [];
-    const pathList = [];
+  const stackList = [];
+  const pathList = [];
+  let path = [[1,1,'PUSH']];
 
-    
-
-    // let stackPath = [[...stack.at(-1),'Push']];
-    // while(stack.length < BOARD_SIZE){
-    //     let isBacktracking = true;
-    //     let i = 0;
-    //     for(; i < BOARD_SIZE; i++){
-    //         let isNext = true;
-    //         for(let j = 0; j < stack.length; j++){
-    //             if(stack[j][1]===i){isNext=false; break;}//직선
-    //             if(Math.abs(stack[j][0]-stack.length)===Math.abs(stack[j][1]-i)){isNext=false; break;}//대각선
-    //         }
-    //         if(isNext){isBacktracking=false; break;}
-    //     }
-    //     if(isBacktracking){
-    //         let result = Backtracking(stack,stackPath,BOARD_SIZE);
-    //         if(result === -1){
-    //             return -1;
-    //         }else{
-    //             stack = [...result[0]];
-    //             stackPath = [...result[1]];
-    //         }
-    //     }else{
-    //         stack.push([stack.length,i]);
-    //         stackPath.push([...stack.at(-1),'Push']);
-    //     }
-    // }
-    return [solutionList,pathList];
-}
-
-function Backtracking(stack,stackPath,BOARD_SIZE){
-    let before = stack.pop();
-    stackPath.push([...before,'Pop']);
-    for(let i = before[1]+1; i < BOARD_SIZE; i++){
-        let isNext = true;
-        for(let j = 0; j < stack.length; j++){
-            if(stack[j][1]===i){isNext=false; break;}//직선
-            if(Math.abs(stack[j][0]-stack.length)===Math.abs(stack[j][1]-i)){isNext=false; break;}//대각선
-        }
-        if(isNext){
-            stack.push([before[0],i]);
-            stackPath.push([before[0],i,'Push']);
-            return [stack,stackPath];
-        }
+  const DFS = (BOARD_SIZE,stack,row) => {
+    if(BOARD_SIZE === row){
+      stackList.push([...stack]);
+      pathList.push([...path]);
+      console.log([...path],[...stack]);
+      return true;
     }
-    if(stack.length===0){return -1;}
-    return Backtracking(stack,stackPath,BOARD_SIZE);
+    else{
+      for(let i = 1; i <= BOARD_SIZE; i++){
+        stack[row+1]=i;
+        if(isValid(stack,row+1)){
+          path.push([row+1,i,'PUSH']);
+          DFS(BOARD_SIZE,stack,row+1);
+          path.push([row+1,i,'POP']);
+        }else{
+          if(i === BOARD_SIZE){return false;}
+        }
+      }
+      return true;
+    }
+  }
+
+  const isValid = (stack,row) =>{
+    for(let i = 1; i < row; i++) {
+      if(stack[i] === stack[row]) return false;
+      if(Math.abs(i-row) === Math.abs(stack[i] - stack[row])) return false;
+    }
+    return true;
+  }
+
+  for(let i = 1; i <= BOARD_SIZE; i++){
+    const stack = Array(BOARD_SIZE+1).fill(0);
+    stack[1]=i;
+    const result = DFS(BOARD_SIZE,stack,1);
+    if(!result){
+      path.push([1,stack[1],'POP']);
+      path.push([1,i+1,'PUSH']);
+    }else{
+      path = [[1,i+1,'PUSH']];
+    }
+  }
+
+  // pathList.forEach(e=>console.log(e));
+  return stackList;
 }

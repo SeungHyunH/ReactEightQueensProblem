@@ -4,7 +4,7 @@ const Board = () => {
   return (
     <>
       <div>Board</div>
-      <button onClick={()=>{console.log(util.solve(5)[0].length);}}>TEST</button>
+      <button onClick={()=>{console.log(util.solve(5).length);}}>TEST</button>
     </>
   )
 }
