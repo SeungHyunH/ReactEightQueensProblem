@@ -76,13 +76,16 @@ const Board = () => {
   }
 
   const DrawPath = ()=>{
-    const ctx = canvas.current.getContext("2d");
-    for(let i = 0; i < boardSize ; i++){
-      for(let j = 0; j < boardSize; j++){
-        ctx.fillRect(i*BLOCK_SIZE.current+1,j*BLOCK_SIZE.current+1,BLOCK_SIZE.current-2,BLOCK_SIZE.current-2);
-        ctx.strokeRect(i*BLOCK_SIZE.current+0.5,j*BLOCK_SIZE.current+0.5,BLOCK_SIZE.current-1,BLOCK_SIZE.current-1);
+    if(pathIndex.current === 0){
+      const ctx = canvas.current.getContext("2d");
+      for(let i = 0; i < boardSize ; i++){
+        for(let j = 0; j < boardSize; j++){
+          ctx.fillRect(i*BLOCK_SIZE.current+1,j*BLOCK_SIZE.current+1,BLOCK_SIZE.current-2,BLOCK_SIZE.current-2);
+          ctx.strokeRect(i*BLOCK_SIZE.current+0.5,j*BLOCK_SIZE.current+0.5,BLOCK_SIZE.current-1,BLOCK_SIZE.current-1);
+        }
       }
     }
+    moveStop.current=false;
     animate();
   }
 
