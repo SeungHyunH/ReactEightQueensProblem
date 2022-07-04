@@ -7,9 +7,13 @@ const Board = () => {
   const [boardSize,setBoardSize] = useState(5);
   const [pathList,setPathList]=useState([]);
   const [currentIndex,setCurrentIndex] = useState(0);
+  const time = useRef({start: 0, elapsed: 0});
+  const moveStop = useRef(false);
   const canvas = useRef();
   const BLOCK_SIZE = useRef(0);
-  
+  const pathIndex = useRef(0);
+  const queen = useRef(new Image());
+  const pathArea = useRef(null);
   useEffect(()=>{
     const solution = [];
     const path = [];
@@ -17,15 +21,22 @@ const Board = () => {
     util.solve(boardSize,solution,path);
     setSolutionList([...solution]);
     setPathList([...path]);
+
+    let result = '';
+    for(let i = pathIndex.current; i < path[currentIndex].length; i++){
+      result+=`[${path[currentIndex][i][0]},${path[currentIndex][i][1]}] PUSH\n`
+    }
+    pathArea.current.value = result;
+    
+
     const ctx = canvas.current.getContext("2d");
     ctx.canvas.width = BLOCK_SIZE.current*boardSize;
     ctx.canvas.height = BLOCK_SIZE.current*boardSize;
     ctx.lineWidth=1;
     ctx.strokeStyle='#000000';
     ctx.fillStyle='#FFFFFF';
-    const queen = new Image();
-    queen.src = '/image/queen.png';
-    queen.onload = ()=>{
+    queen.current.src = '/image/queen.png';
+    queen.current.onload = ()=>{
       for(let i = 0; i < boardSize ; i++){
         for(let j = 0; j < boardSize; j++){
           ctx.fillRect(i*BLOCK_SIZE.current+1,j*BLOCK_SIZE.current+1,BLOCK_SIZE.current-2,BLOCK_SIZE.current-2);
@@ -33,26 +44,25 @@ const Board = () => {
         }
       }
       for(let i = 0; i < boardSize; i++){
-        ctx.drawImage(queen,(solution[currentIndex][i+1]-1)*BLOCK_SIZE.current,i*BLOCK_SIZE.current,BLOCK_SIZE.current,BLOCK_SIZE.current);
+        ctx.drawImage(queen.current,(solution[currentIndex][i+1]-1)*BLOCK_SIZE.current,i*BLOCK_SIZE.current,BLOCK_SIZE.current,BLOCK_SIZE.current);
       }
     }
   },[])
 
   useEffect(()=>{
     if(solutionList.length<1){return;}
-    const queen = new Image();
-    queen.src = '/image/queen.png';
+    pathArea.current.value = GetPath();
     const ctx = canvas.current.getContext("2d");
     ctx.strokeStyle='#000000';
     ctx.fillStyle='#FFFFFF';
-    queen.onload = ()=>{
+    queen.current.onload = ()=>{
       for(let i = 0; i < boardSize ; i++){
         for(let j = 0; j < boardSize; j++){
           ctx.fillRect(i*BLOCK_SIZE.current+1,j*BLOCK_SIZE.current+1,BLOCK_SIZE.current-2,BLOCK_SIZE.current-2);
           ctx.strokeRect(i*BLOCK_SIZE.current+0.5,j*BLOCK_SIZE.current+0.5,BLOCK_SIZE.current-1,BLOCK_SIZE.current-1);
         }
       }
-      for(let i = 0; i < boardSize; i++){ctx.drawImage(queen,(solutionList[currentIndex][i+1]-1)*BLOCK_SIZE.current,i*BLOCK_SIZE.current,BLOCK_SIZE.current,BLOCK_SIZE.current);}
+      for(let i = 0; i < boardSize; i++){ctx.drawImage(queen.current,(solutionList[currentIndex][i+1]-1)*BLOCK_SIZE.current,i*BLOCK_SIZE.current,BLOCK_SIZE.current,BLOCK_SIZE.current);}
     }
   },[currentIndex])
 
@@ -61,6 +71,53 @@ const Board = () => {
     if(solutionList.length < 1){return;}
     for(let i = 1; i < solutionList[currentIndex].length; i++){
       result.push(<Solution key={i}>{solutionList[currentIndex][i]}</Solution>);
+    }
+    return result;
+  }
+
+  const DrawPath = ()=>{
+    const ctx = canvas.current.getContext("2d");
+    for(let i = 0; i < boardSize ; i++){
+      for(let j = 0; j < boardSize; j++){
+        ctx.fillRect(i*BLOCK_SIZE.current+1,j*BLOCK_SIZE.current+1,BLOCK_SIZE.current-2,BLOCK_SIZE.current-2);
+        ctx.strokeRect(i*BLOCK_SIZE.current+0.5,j*BLOCK_SIZE.current+0.5,BLOCK_SIZE.current-1,BLOCK_SIZE.current-1);
+      }
+    }
+    animate();
+  }
+
+  const animate = (now = 0)=>{
+    if(moveStop.current){return;}
+    // 지난 시간을 업데이트한다.
+    time.current.elapsed = now - time.current.start;
+    // 지난 시간이 현재 레벨의 시간을 초과했는지 확인한다.
+    if (time.current.elapsed > 1000) {
+      // 현재 시간을 다시 측정한다.
+      time.current.start = now;
+      
+      if(pathIndex.current >= pathList[currentIndex].length){moveStop.current=true;}
+      const ctx = canvas.current.getContext("2d");
+      if(pathList[currentIndex][pathIndex.current][2]==='PUSH'){
+        ctx.drawImage(queen.current,(pathList[currentIndex][pathIndex.current][1]-1)*BLOCK_SIZE.current,(pathList[currentIndex][pathIndex.current][0]-1)*BLOCK_SIZE.current,BLOCK_SIZE.current,BLOCK_SIZE.current);
+      }else{
+        ctx.fillRect((pathList[currentIndex][pathIndex.current][1]-1)*BLOCK_SIZE.current+1,(pathList[currentIndex][pathIndex.current][0]-1)*BLOCK_SIZE.current+1,BLOCK_SIZE.current-2,BLOCK_SIZE.current-2);
+      }
+      pathIndex.current +=1;
+      pathArea.current.value = GetPath();
+      if(pathIndex.current >= pathList[currentIndex].length){
+        moveStop.current=true;
+        pathIndex.current = 0;
+        pathArea.current.value = GetPath();
+      }
+    }
+    requestAnimationFrame(animate);
+  }
+  
+  const GetPath = ()=>{
+    if(pathList.length<1 || pathIndex.current >= pathList[currentIndex].length){return '';}
+    let result = '';
+    for(let i = pathIndex.current; i < pathList[currentIndex].length; i++){
+      result+=`[${pathList[currentIndex][i][0]},${pathList[currentIndex][i][1]}] ${pathList[currentIndex][i][2]}\n`
     }
     return result;
   }
@@ -82,11 +139,12 @@ const Board = () => {
       </SolutionContainer>
       <MainContainer>
         <ButtonContainer>
-          <Button>test</Button>
+          <Button onClick={DrawPath}>경로추적</Button>
+          <Button onClick={()=>{moveStop.current=true;}}>경로추적</Button>
         </ButtonContainer>
         <canvas ref={canvas} style={{backgroundColor:'#d3d3d3'}}/>
         <ButtonContainer>
-          <Button>test</Button>
+          <PathArea ref={pathArea} disabled/>
         </ButtonContainer>
       </MainContainer>
     </Wrap>
@@ -117,6 +175,18 @@ const ButtonContainer = styled.div`
   display: flex;
   flex-direction: column;
   align-items: center;
+`
+
+const PathArea = styled.textarea`
+  width: 50%;
+  height: 100%;
+  font-size: 2rem;
+  text-align: center;
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+  ::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera*/
+  }
 `
 
 const Button = styled.button`
