@@ -1,13 +1,10 @@
-export function solve(BOARD_SIZE){
-  const stackList = [];
-  const pathList = [];
+export function solve(BOARD_SIZE,stackList,pathList){
   let path = [[1,1,'PUSH']];
 
   const DFS = (BOARD_SIZE,stack,row) => {
     if(BOARD_SIZE === row){
       stackList.push([...stack]);
       pathList.push([...path]);
-      console.log([...path],[...stack]);
       return true;
     }
     else{
@@ -44,7 +41,4 @@ export function solve(BOARD_SIZE){
       path = [[1,i+1,'PUSH']];
     }
   }
-
-  // pathList.forEach(e=>console.log(e));
-  return stackList;
 }
