@@ -30,8 +30,8 @@ const Board = () => {
     
 
     const ctx = canvas.current.getContext("2d");
-    ctx.canvas.width = BLOCK_SIZE.current*boardSize;
-    ctx.canvas.height = BLOCK_SIZE.current*boardSize;
+    ctx.canvas.width = BLOCK_SIZE.current*boardSize+2;
+    ctx.canvas.height = BLOCK_SIZE.current*boardSize+2;
     ctx.lineWidth=1;
     ctx.strokeStyle='#000000';
     ctx.fillStyle='#FFFFFF';
@@ -125,6 +125,45 @@ const Board = () => {
     return result;
   }
 
+  const ChangeSize = (e)=>{
+    const SIZE = parseInt(e.target.value);
+    setBoardSize(SIZE);
+    const solution = [];
+    const path = [];
+    
+    util.solve(SIZE,solution,path);
+    setSolutionList([...solution]);
+    setPathList([...path]);
+    setCurrentIndex(0);
+    pathIndex.current=0;
+    
+    BLOCK_SIZE.current = Math.floor((document.documentElement.clientWidth/3)/SIZE);
+    const ctx = canvas.current.getContext("2d");
+    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+    
+    for(let i = 0; i < SIZE ; i++){
+      
+      for(let j = 0; j < SIZE; j++){
+        ctx.fillRect(i*BLOCK_SIZE.current+1,j*BLOCK_SIZE.current+1,BLOCK_SIZE.current-2,BLOCK_SIZE.current-2);
+        ctx.strokeRect(i*BLOCK_SIZE.current+0.5,j*BLOCK_SIZE.current+0.5,BLOCK_SIZE.current-1,BLOCK_SIZE.current-1);
+      }
+    }
+    if(solution.length>0){
+      let result = '';
+      for(let i = pathIndex.current; i < path[0].length; i++){
+        result+=`[${path[0][i][0]},${path[0][i][1]}] ${path[0][i][2]}\n`
+      }
+      pathArea.current.value = result;
+
+      for(let i = 0; i < SIZE; i++){
+        ctx.drawImage(queen.current,(solution[0][i+1]-1)*BLOCK_SIZE.current,i*BLOCK_SIZE.current,BLOCK_SIZE.current,BLOCK_SIZE.current);
+      }
+    }else{
+      pathArea.current.value='';
+    }
+    moveStop.current=false;
+  } 
+
   return (
     <Wrap>
       <SolutionContainer>
@@ -142,10 +181,13 @@ const Board = () => {
       </SolutionContainer>
       <MainContainer>
         <ButtonContainer>
-          <Button onClick={DrawPath}>경로추적</Button>
-          <Button onClick={()=>{moveStop.current=true;}}>경로추적</Button>
+          <Button onClick={DrawPath}>START</Button>
+          <Button onClick={()=>{moveStop.current=true;}}>STOP</Button>
+          <select value={boardSize} onChange={ChangeSize}>
+            {Array(10).fill(0).map((_,idx)=><option key={idx} value={idx+1}>{idx+1}</option>)}
+          </select>
         </ButtonContainer>
-        <canvas ref={canvas} style={{backgroundColor:'#d3d3d3'}}/>
+        <canvas ref={canvas}/>
         <ButtonContainer>
           <PathArea ref={pathArea} disabled/>
         </ButtonContainer>
@@ -194,7 +236,7 @@ const PathArea = styled.textarea`
 
 const Button = styled.button`
   width: 10rem;
-  height: 1rem;
+  height: 3rem;
 `
 
 const Solution = styled.div`
@@ -220,7 +262,7 @@ const ArrowRight = styled.div`
   height: 0;
   border-top:2rem solid transparent;
   border-bottom:2rem solid transparent;
-  border-left: ${props => props.currentIndex === props.solutionLength ? '3rem solid transparent':'3rem solid #000000'};
+  border-left: ${props => props.currentIndex >= props.solutionLength ? '3rem solid transparent':'3rem solid #000000'};
   margin-left: 1rem;
 `
 
